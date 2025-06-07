@@ -15,14 +15,94 @@ struct ContentView: View {
     var body: some View {
         switch horizontalSizeClass {
         case .regular:
-            mainView.frame(width: 360, height: 600, alignment: .center)
+            desktopLayout
         default:
-            mainView
+            mobileLayout
         }
     }
     
-    @ViewBuilder
-    private var mainView: some View {
+    // Desktop layout with sidebar design
+    private var desktopLayout: some View {
+        HStack(spacing: 0) {
+            // Sidebar
+            VStack(alignment: .leading, spacing: 20) {
+                Text("DEV Icon Generator")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .padding(.top, 20)
+                    .padding(.bottom, 10)
+                
+                Divider()
+                
+                Text("Platform Options")
+                    .font(.headline)
+                    .padding(.top, 10)
+                
+                VStack(alignment: .leading, spacing: 12) {
+                    Toggle("iPhone", isOn: $viewModel.isExportingToiPhone)
+                    Toggle("iPad", isOn: $viewModel.isExportingToiPad)
+                    Toggle("Mac", isOn: $viewModel.isExportingToMac)
+                    Toggle("Apple Watch", isOn: $viewModel.isExportingToWatch)
+                }
+                .disabled(viewModel.isToggleOptionsDisabled)
+                .padding(.leading, 10)
+                
+                Spacer()
+                
+                Button {
+                    viewModel.export()
+                } label: {
+                    Label("Export Icons", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(viewModel.isExportButtonDisabled)
+                .padding(.bottom, 20)
+            }
+            .frame(width: 250)
+            .padding(.horizontal)
+            .background(Color(uiColor: .secondarySystemBackground))
+            
+            // Main content area
+            VStack {
+                Spacer()
+                
+                iconView
+                    .frame(width: 300, height: 300)
+                
+                if viewModel.isExportingInProgress {
+                    ProgressView("Generating icons...")
+                        .padding()
+                }
+                
+                if case let .failure(error) = viewModel.exportingPhase {
+                    Text(error.localizedDescription)
+                        .foregroundColor(.red)
+                        .padding()
+                        .multilineTextAlignment(.center)
+                }
+                
+                if case .completed = viewModel.exportingPhase {
+                    Text("Icons generated successfully!")
+                        .foregroundColor(.green)
+                        .padding()
+                }
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            .background(Color(uiColor: .systemBackground))
+        }
+        .animation(.default, value: viewModel.exportingPhase)
+        .animation(.default, value: viewModel.selectedImage)
+        .fullScreenCover(isPresented: $viewModel.isPresentingImagePicker) {
+            ImagePickerView(image: $viewModel.selectedImage)
+        }
+    }
+    
+    // Mobile layout (original design)
+    private var mobileLayout: some View {
         VStack(spacing: 24) {
             iconView
             if viewModel.isExportingInProgress {
@@ -54,19 +134,22 @@ struct ContentView: View {
                         
                     } else {
                         VStack(spacing: 16) {
-                            Image(systemName: "photo")
-                                .font(.largeTitle)
-                            Text("Select 1024x1024 icon")
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 40))
+                            Text("Drag & Drop or Click to Select")
+                                .font(.headline)
+                            Text("Recommended size: 1024×1024")
                                 .font(.caption)
                         }
                         .foregroundColor(.white)
                     }
                 }
         }
-        .frame(width: 200, height: 200, alignment: .center)
+        .buttonStyle(PlainButtonStyle())
+        .contentShape(RoundedRectangle(cornerRadius: 24))
         .disabled(viewModel.isExportingInProgress)
         .onDrop(of: ["public.image"], isTargeted: nil, perform: viewModel.handleOnDropProviders)
-        
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
     
     @ViewBuilder
