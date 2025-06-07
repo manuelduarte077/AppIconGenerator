@@ -14,8 +14,8 @@ IFS=$'\n\t'
 # =========================================================
 readonly APP_NAME="DevIconGenerator"
 readonly APP_BUNDLE="DevIconGenerator"
-readonly PROJECT_FILE="DevIconGenerator.xcodeproj"
-readonly SCHEME_NAME="DevIconGenerator"
+PROJECT_FILE="DevIconGenerator.xcodeproj" # Eliminado readonly para permitir cambios
+SCHEME_NAME="DevIconGenerator" # Eliminado readonly para permitir cambios
 readonly BUILD_DIR="build"
 readonly DMG_DIR="dmg-temp"
 readonly EXPORT_DIR="${BUILD_DIR}/export"
@@ -76,6 +76,28 @@ get_version() {
 }
 
 # =========================================================
+# Asegurar que estamos en el directorio correcto
+# =========================================================
+ensure_correct_directory() {
+    # Obtener el directorio del script
+    local SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    log_info "Script directory: $SCRIPT_DIR"
+    
+    # Si estamos en un subdirectorio del proyecto, subir al directorio principal
+    if [[ "$SCRIPT_DIR" == */DevIconGenerator/* ]]; then
+        cd "$(echo "$SCRIPT_DIR" | sed 's|\(.*DevIconGenerator\).*|\1|')"
+    # Si estamos en el directorio del proyecto, quedarnos ahí
+    elif [[ "$SCRIPT_DIR" == */DevIconGenerator ]]; then
+        cd "$SCRIPT_DIR"
+    # Si estamos en el directorio padre, entrar al directorio del proyecto
+    elif [ -d "$SCRIPT_DIR/DevIconGenerator" ]; then
+        cd "$SCRIPT_DIR/DevIconGenerator"
+    fi
+    
+    log_info "Working directory: $(pwd)"
+}
+
+# =========================================================
 # Main functions
 # =========================================================
 check_dependencies() {
@@ -117,26 +139,44 @@ clean_build() {
 build_app() {
     log_section "Building ${APP_NAME}"
     
+    # Mostrar el directorio actual para diagnóstico
+    log_info "Current directory: $(pwd)"
+    log_info "Directory contents:"
+    ls -la
+    
     # Check if project file exists
-    if [ ! -f "${PROJECT_FILE}" ]; then
+    if [ ! -f "${PROJECT_FILE}" ] && [ ! -d "${PROJECT_FILE}" ]; then
         log_warning "Project file ${PROJECT_FILE} not found, searching for alternatives..."
         
-        # Buscar alternativas de proyecto
-        local PROJECT_ALTERNATIVES=$(find . -maxdepth 1 -name "*.xcodeproj" -type d)
+        # Buscar alternativas de proyecto en todo el directorio
+        log_info "Searching for .xcodeproj files..."
+        local PROJECT_ALTERNATIVES=$(find . -name "*.xcodeproj" -type d)
+        log_info "Found projects: $PROJECT_ALTERNATIVES"
+        
         if [ -z "$PROJECT_ALTERNATIVES" ]; then
             log_error "No Xcode project files found"
             exit 1
         fi
         
         # Usar el primer proyecto encontrado
-        PROJECT_FILE=$(basename "$(echo "$PROJECT_ALTERNATIVES" | head -1)")
+        PROJECT_FILE=$(echo "$PROJECT_ALTERNATIVES" | head -1)
         log_info "Using alternative project file: ${PROJECT_FILE}"
     fi
     
     # Check if scheme exists
-    local SCHEMES=$(xcodebuild -project "${PROJECT_FILE}" -list -json 2>/dev/null | grep -o '"scheme" : "[^"]*"' | cut -d '"' -f 4)
+    log_info "Checking available schemes in ${PROJECT_FILE}"
+    
+    # Obtener la lista de esquemas directamente del comando xcodebuild -list
+    local SCHEMES_OUTPUT=$(xcodebuild -project "${PROJECT_FILE}" -list 2>/dev/null)
+    
+    # Extraer los esquemas de la salida
+    local SCHEMES=$(echo "$SCHEMES_OUTPUT" | grep -A 100 "Schemes:" | grep -v "Schemes:" | grep -v "^$" | sed 's/^[ \t]*//')
+    
+    log_info "Available schemes: $SCHEMES"
+    
     local SCHEME_EXISTS=false
     
+    # Verificar si el esquema que queremos existe
     for scheme in $SCHEMES; do
         if [ "$scheme" == "${SCHEME_NAME}" ]; then
             SCHEME_EXISTS=true
@@ -147,6 +187,8 @@ build_app() {
     if [ "$SCHEME_EXISTS" == "false" ]; then
         log_warning "Scheme ${SCHEME_NAME} not found, using first available scheme"
         SCHEME_NAME=$(echo "$SCHEMES" | head -1)
+        log_info "Using scheme: ${SCHEME_NAME}"
+    else
         log_info "Using scheme: ${SCHEME_NAME}"
     fi
     
@@ -173,8 +215,38 @@ export_app() {
     # Create export directory
     mkdir -p "${EXPORT_DIR}"
     
-    # Copy the built app directly from build products
-    cp -R "${BUILD_DIR}/Build/Products/Release/${APP_BUNDLE}.app" "${EXPORT_DIR}/"
+    # Buscar la aplicación compilada en diferentes configuraciones posibles
+    local APP_PATHS=(
+        "${BUILD_DIR}/Build/Products/Release/${APP_BUNDLE}.app"
+        "${BUILD_DIR}/Build/Products/Release-maccatalyst/${APP_BUNDLE}.app"
+    )
+    
+    local APP_FOUND=false
+    
+    # Intentar encontrar la aplicación en las rutas posibles
+    for app_path in "${APP_PATHS[@]}"; do
+        if [ -d "$app_path" ]; then
+            log_info "Found app at: $app_path"
+            cp -R "$app_path" "${EXPORT_DIR}/"
+            APP_FOUND=true
+            break
+        fi
+    done
+    
+    if [ "$APP_FOUND" == "false" ]; then
+        # Buscar la aplicación en cualquier lugar dentro de la carpeta de compilación
+        log_warning "App not found in standard locations, searching in build directory..."
+        local FOUND_APP=$(find "${BUILD_DIR}" -name "${APP_BUNDLE}.app" -type d | head -1)
+        
+        if [ -n "$FOUND_APP" ]; then
+            log_info "Found app at: $FOUND_APP"
+            cp -R "$FOUND_APP" "${EXPORT_DIR}/"
+            APP_FOUND=true
+        else
+            log_error "Could not find built app in build directory"
+            exit 1
+        fi
+    fi
     
     log_success "App exported to ${EXPORT_DIR}/${APP_BUNDLE}.app"
 }
@@ -296,8 +368,8 @@ parse_args() {
 main() {
     log_section "Starting ${APP_NAME} Release Build"
     
-    # Change to project root directory
-    cd "$(dirname "$0")/.."
+    # Asegurar que estamos en el directorio correcto
+    ensure_correct_directory
     
     parse_args "$@"
     
