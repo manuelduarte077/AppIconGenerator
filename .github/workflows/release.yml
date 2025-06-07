@@ -12,28 +12,25 @@ env:
 
 jobs:
   build-and-release:
-    runs-on: macos-14
+    runs-on: macos-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Needed to get all tags for versioning
       
-    - name: Show Environment Info
-      run: |
-        echo "macOS Version:"
-        sw_vers
-        echo "\nXcode Version:"
-        xcodebuild -version
-        echo "\nSwift Version:"
-        swift --version
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest
+        
+    - name: Show Xcode version
+      run: xcodebuild -version
       
     - name: Make build script executable
-      run: chmod +x ./build_release.sh
+      run: chmod +x scripts/build_release.sh
       
     - name: Build and create DMG using local script
-      run: ./build_release.sh --keep
+      run: ./scripts/build_release.sh --keep
           
     - name: Get version and DMG info
       id: get_version
@@ -51,7 +48,7 @@ jobs:
         fi
         
         # Find the DMG file created by the build script
-        DMG_FILE=$(find ./artifacts -name "DevIconGenerator-*.dmg" -type f | head -1)
+        DMG_FILE=$(find . -name "DevIconGenerator-*.dmg" -type f | head -1)
         if [[ -n "$DMG_FILE" ]]; then
           echo "dmg_file=${DMG_FILE}" >> $GITHUB_OUTPUT
           echo "dmg_basename=$(basename ${DMG_FILE})" >> $GITHUB_OUTPUT
@@ -92,36 +89,39 @@ jobs:
         
         Generador de iconos para aplicaciones iOS, iPadOS, macOS y watchOS.
         
-        ## Cambios en esta versión
+        ## What's Changed in this Release
         
         $COMMIT_LOG
         
-        **$COMMIT_COUNT commits** desde la versión anterior
+        **$COMMIT_COUNT commits** since previous release
         
-        ## Instalación rápida
-        1. Descarga el archivo DMG
-        2. Abre el DMG y arrastra DevIconGenerator a la carpeta de Aplicaciones
-        3. Inicia la aplicación desde Aplicaciones o Spotlight
+        ## Quick Start
+        1. Download the DMG file below
+        2. Open the DMG and drag AVD Manager to Applications  
+        3. Launch from Applications or Spotlight
+        4. Access Settings to configure your Android SDK path
         
-        ## Requisitos del sistema
-        - macOS 12.0 o posterior (Universal Binary: Intel & Apple Silicon)
-        - Xcode 14.0 o posterior (para desarrollo iOS/macOS)
+        ## System Requirements
+        - macOS 14.0 or later (Universal Binary: Intel & Apple Silicon)
+        - Android SDK with emulator tools installed
+        - Xcode Command Line Tools (for Android development)
         
-        ## Características principales
-        - 📱 Genera iconos para iOS, iPadOS, macOS y watchOS
-        - 🎯 Soporte para múltiples tamaños y resoluciones
-        - 🎨 Interfaz moderna y fácil de usar
-        - ⚡ Rápido y ligero
-        - 🔍 Búsqueda en Spotlight con icono personalizado
+        ## Key Features
+        - 📱 Launch and stop Android emulators from the status bar
+        - ⚙️ Configurable Android SDK path in Settings
+        - 🎯 Real-time emulator status detection  
+        - 🎨 Professional JetBrains Toolbox-inspired interface
+        - ⚡ Fast and lightweight
+        - 🔍 Spotlight-searchable with custom app icon
         
-        ## Verificación de archivo
+        ## File Verification
         \`\`\`
         ${{ env.DMG_CHECKSUM }}
         \`\`\`
         
         ---
         
-        **Nota**: Esta aplicación requiere macOS 12.0 o posterior.
+        **Note**: This app requires Android SDK tools to be installed and accessible in your PATH. Use Settings to configure custom SDK locations.
         EOF
         
     - name: Create GitHub Release
