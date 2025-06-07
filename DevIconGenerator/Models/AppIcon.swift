@@ -55,12 +55,3 @@ struct AppIcon {
     }
     
 }
-
-
-extension CGFloat {
-    
-    var formattedString: String {
-        truncatingRemainder(dividingBy: 1) == 0 ? String(Int(self)) : String(format: "%.1f", self)
-    }
-    
-}
