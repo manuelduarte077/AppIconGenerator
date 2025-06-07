@@ -3,81 +3,75 @@ name: macOS Build and Package
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "main" ]
 
 jobs:
   build:
     name: Build and Package macOS App
-    runs-on: macos-latest
+    runs-on: macos-14 # Usar macOS 14 (Sonoma) que tiene Xcode 15.x
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para obtener todos los tags para versionado
         
-      - name: Set Default Scheme
+      - name: Show Environment Info
         run: |
-          scheme_list=$(xcodebuild -list -json | tr -d "\n")
-          default=$(echo $scheme_list | ruby -e "require 'json'; puts JSON.parse(STDIN.gets)['project']['targets'][0]")
-          echo $default | cat >default
-          echo Using default scheme: $default
-          
-      - name: Build macOS App
-        env:
-          scheme: ${{ 'default' }}
+          echo "macOS Version:"
+          sw_vers
+          echo "\nXcode Version:"
+          xcodebuild -version
+          echo "\nSwift Version:"
+          swift --version
+        
+      - name: Make Build Script Executable
+        run: chmod +x ./build_release.sh
+        
+      - name: Run Build Script
+        run: ./build_release.sh
+        
+      - name: Find DMG File
+        id: find-dmg
         run: |
-          if [ $scheme = default ]; then scheme=$(cat default); fi
-          if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then 
-            filetype_parameter="workspace" 
-            file_to_build="`ls -A | grep -i \\.xcworkspace\$`"
-          else 
-            filetype_parameter="project" 
-            file_to_build="`ls -A | grep -i \\.xcodeproj\$`"
+          DMG_FILE=$(find ./artifacts -name "*.dmg" | head -1)
+          if [ -z "$DMG_FILE" ]; then
+            echo "::error::No DMG file found"
+            exit 1
           fi
-          file_to_build=`echo $file_to_build | awk '{$1=$1;print}'`
-          
-          # Build for macOS
-          xcodebuild -scheme "$scheme" -"$filetype_parameter" "$file_to_build" -configuration Release -destination 'platform=macOS' -derivedDataPath ./build
-          
-      - name: Create DMG
-        run: |
-          # Install create-dmg
-          brew install create-dmg
-          
-          # Get app name from the scheme
-          APP_NAME=$(cat default)
-          
-          # Create directory for DMG content
-          mkdir -p ./dmg-contents
-          
-          # Copy app to dmg-contents
-          cp -R ./build/Build/Products/Release/${APP_NAME}.app ./dmg-contents/
-          
-          # Create DMG
-          create-dmg \
-            --volname "${APP_NAME}" \
-            --volicon "./DevIconGenerator/Assets.xcassets/AppIcon.appiconset/mac1024.png" \
-            --window-pos 200 120 \
-            --window-size 800 400 \
-            --icon-size 100 \
-            --icon "${APP_NAME}.app" 200 190 \
-            --hide-extension "${APP_NAME}.app" \
-            --app-drop-link 600 185 \
-            "${APP_NAME}.dmg" \
-            "./dmg-contents/"
+          echo "DMG_FILE=$DMG_FILE" >> $GITHUB_OUTPUT
+          echo "DMG_NAME=$(basename "$DMG_FILE")" >> $GITHUB_OUTPUT
             
       - name: Upload DMG as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DevIconGenerator-macOS
-          path: ./*.dmg
+          path: ${{ steps.find-dmg.outputs.DMG_FILE }}
           
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./*.dmg
+          files: ${{ steps.find-dmg.outputs.DMG_FILE }}
+          name: DevIconGenerator ${{ github.ref_name }}
+          body: |
+            # DevIconGenerator ${{ github.ref_name }}
+            
+            Generador de iconos para aplicaciones iOS, iPadOS, macOS y watchOS.
+            
+            ## Instalación
+            
+            Descarga el archivo DMG y arrastra la aplicación a tu carpeta de Aplicaciones.
+            
+            ## Cambios en esta versión
+            
+            * Mejoras en la interfaz de usuario
+            * Corrección de errores
+            * Optimización de rendimiento
           draft: false
           prerelease: false
         env:
