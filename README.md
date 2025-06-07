@@ -32,17 +32,49 @@ En dispositivos móviles, la aplicación se adapta para ofrecer una experiencia 
 2. **Elige las plataformas**: Selecciona para qué plataformas deseas generar iconos (iPhone, iPad, Mac, Apple Watch)
 3. **Exporta**: Haz clic en el botón "Export" para generar y descargar un archivo ZIP con todos los iconos
 
-## 🏗️ Arquitectura
+## 💻 Arquitectura
 
-La aplicación está construida siguiendo una arquitectura MVVM (Model-View-ViewModel):
+La aplicación está construida siguiendo una arquitectura MVVM (Model-View-ViewModel) con una estructura modular y componentes reutilizables:
+
+### Estructura de Directorios
+```
+DevIconGenerator/
+├── Views/
+│   ├── ContentView.swift
+│   └── Components/
+│       ├── ImagePickerView.swift
+│       ├── IconPreviewView.swift
+│       ├── PlatformOptionsView.swift
+│       ├── StatusMessageView.swift
+│       └── ExportButton.swift
+├── ViewModels/
+│   └── ViewModel.swift
+├── Models/
+│   ├── AppIcon.swift
+│   └── Enums.swift
+├── Services/
+│   ├── IconFileGeneratorService.swift
+│   ├── IconResizerService.swift
+│   └── FileIconService.swift
+├── Utils/
+│   ├── Constants.swift
+│   └── Extensions.swift
+└── DevIconGeneratorApp.swift
+```
 
 ### Modelos
 - `AppIcon`: Representa un icono de aplicación con sus propiedades (idioma, tamaño, escala)
-- `AppIconType`: Enumera los diferentes tipos de iconos para cada plataforma
+- `Enums`: Define tipos enumerados para plataformas, idiomas y roles de iconos
 
 ### Vistas
-- `ContentView`: Vista principal que se adapta según el tamaño de la pantalla
-- `ImagePickerView`: Componente para seleccionar imágenes
+- `ContentView`: Vista principal que se adapta según el tamaño de la pantalla (desktop/móvil)
+
+#### Componentes Reutilizables
+- `ImagePickerView`: Componente para seleccionar imágenes desde la galería
+- `IconPreviewView`: Componente para mostrar la previsualización del icono seleccionado
+- `PlatformOptionsView`: Componente para seleccionar las plataformas de destino
+- `StatusMessageView`: Componente para mostrar mensajes de estado (progreso, éxito, error)
+- `ExportButton`: Botón reutilizable para la exportación de iconos
 
 ### ViewModels
 - `ViewModel`: Gestiona la lógica de negocio y la comunicación entre la vista y los servicios
@@ -51,6 +83,10 @@ La aplicación está construida siguiendo una arquitectura MVVM (Model-View-View
 - `IconFileGeneratorService`: Coordina la generación de archivos de iconos
 - `IconResizerService`: Redimensiona las imágenes a los tamaños requeridos
 - `FileIconService`: Maneja las operaciones de archivos y la exportación
+
+### Utilidades
+- `Constants`: Define constantes globales para la aplicación (tamaños, colores, mensajes)
+- `Extensions`: Extensiones de tipos básicos para mejorar la funcionalidad
 
 ## 🚀 Instalación
 
@@ -77,10 +113,6 @@ Las contribuciones son bienvenidas. Para contribuir:
 4. Push a la rama (`git push origin feature/amazing-feature`)
 5. Abre un Pull Request
 
-
-## 👨‍💻 Autor
-
-**Manuel Duarte** - [@manuelduarte077](https://github.com/manuelduarte077)
 
 ---
 
