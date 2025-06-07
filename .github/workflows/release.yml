@@ -1,0 +1,147 @@
+name: Build and Release DevIconGenerator
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  APP_NAME: "DevIconGenerator"
+  DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Needed to get all tags for versioning
+      
+    - name: Show Environment Info
+      run: |
+        echo "macOS Version:"
+        sw_vers
+        echo "\nXcode Version:"
+        xcodebuild -version
+        echo "\nSwift Version:"
+        swift --version
+      
+    - name: Make build script executable
+      run: chmod +x ./build_release.sh
+      
+    - name: Build and create DMG using local script
+      run: ./build_release.sh --keep
+          
+    - name: Get version and DMG info
+      id: get_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=false" >> $GITHUB_OUTPUT
+        else
+          VERSION=$(git rev-parse --short HEAD)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=dev-${VERSION}" >> $GITHUB_OUTPUT
+          echo "is_prerelease=true" >> $GITHUB_OUTPUT
+        fi
+        
+        # Find the DMG file created by the build script
+        DMG_FILE=$(find ./artifacts -name "DevIconGenerator-*.dmg" -type f | head -1)
+        if [[ -n "$DMG_FILE" ]]; then
+          echo "dmg_file=${DMG_FILE}" >> $GITHUB_OUTPUT
+          echo "dmg_basename=$(basename ${DMG_FILE})" >> $GITHUB_OUTPUT
+          # Get checksum if it exists, otherwise create it
+          if [[ -f "${DMG_FILE}.sha256" ]]; then
+            echo "DMG_CHECKSUM=$(cat ${DMG_FILE}.sha256)" >> $GITHUB_ENV
+          else
+            shasum -a 256 "$DMG_FILE" > "${DMG_FILE}.sha256"
+            echo "DMG_CHECKSUM=$(cat ${DMG_FILE}.sha256)" >> $GITHUB_ENV
+          fi
+        else
+          echo "Error: No DMG file found"
+          exit 1
+        fi
+        
+    - name: Generate Release Notes from Commits
+      run: |
+        # Get current and previous tags
+        CURRENT_TAG="${{ steps.get_version.outputs.tag }}"
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        # If no previous tag, use initial commit
+        if [ -z "$PREVIOUS_TAG" ]; then
+          PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+        fi
+        
+        echo "Generating release notes from $PREVIOUS_TAG to $CURRENT_TAG"
+        
+        # Generate commit log
+        COMMIT_LOG=$(git log $PREVIOUS_TAG..HEAD --oneline --no-merges --pretty=format:"- %s" 2>/dev/null || git log --oneline --no-merges --pretty=format:"- %s")
+        
+        # Count commits
+        COMMIT_COUNT=$(echo "$COMMIT_LOG" | wc -l | tr -d ' ')
+        
+        # Generate release notes
+        cat > release_notes.md << EOF
+        # DevIconGenerator v${{ steps.get_version.outputs.version }}
+        
+        Generador de iconos para aplicaciones iOS, iPadOS, macOS y watchOS.
+        
+        ## Cambios en esta versión
+        
+        $COMMIT_LOG
+        
+        **$COMMIT_COUNT commits** desde la versión anterior
+        
+        ## Instalación rápida
+        1. Descarga el archivo DMG
+        2. Abre el DMG y arrastra DevIconGenerator a la carpeta de Aplicaciones
+        3. Inicia la aplicación desde Aplicaciones o Spotlight
+        
+        ## Requisitos del sistema
+        - macOS 12.0 o posterior (Universal Binary: Intel & Apple Silicon)
+        - Xcode 14.0 o posterior (para desarrollo iOS/macOS)
+        
+        ## Características principales
+        - 📱 Genera iconos para iOS, iPadOS, macOS y watchOS
+        - 🎯 Soporte para múltiples tamaños y resoluciones
+        - 🎨 Interfaz moderna y fácil de usar
+        - ⚡ Rápido y ligero
+        - 🔍 Búsqueda en Spotlight con icono personalizado
+        
+        ## Verificación de archivo
+        \`\`\`
+        ${{ env.DMG_CHECKSUM }}
+        \`\`\`
+        
+        ---
+        
+        **Nota**: Esta aplicación requiere macOS 12.0 o posterior.
+        EOF
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get_version.outputs.tag }}
+        name: DevIconGenerator v${{ steps.get_version.outputs.version }}
+        body_path: release_notes.md
+        files: |
+          ${{ steps.get_version.outputs.dmg_file }}
+          ${{ steps.get_version.outputs.dmg_file }}.sha256
+        draft: false
+        prerelease: ${{ steps.get_version.outputs.is_prerelease }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload DMG as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.get_version.outputs.dmg_basename }}
+        path: |
+          ${{ steps.get_version.outputs.dmg_file }}
+          ${{ steps.get_version.outputs.dmg_file }}.sha256
