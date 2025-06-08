@@ -87,7 +87,7 @@ export_app() {
     mkdir -p "$EXPORT_DIR"
     
     # Copy the built app directly from build products
-    cp -R "$BUILD_DIR/Build/Products/Release/DevIconGenerator.app" "$EXPORT_DIR/"
+    cp -R "$BUILD_DIR/Build/Products/Release-maccatalyst/DevIconGenerator.app" "$EXPORT_DIR/"
     
     print_success "App copied successfully"
 }
