@@ -47,6 +47,7 @@ struct IconPreviewView: View {
         .buttonStyle(PlainButtonStyle())
         .contentShape(RoundedRectangle(cornerRadius: 24))
         .disabled(isDisabled)
+        .help(Constants.Tooltips.openImage)
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }

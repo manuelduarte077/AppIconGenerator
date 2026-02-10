@@ -92,7 +92,7 @@ enum AppIconType {
             return "Watch"
         }
     }
-    
+
     var json: [String: Any] {
         [
             "images": templateAppIcons.map { $0.json },

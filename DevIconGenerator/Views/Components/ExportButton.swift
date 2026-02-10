@@ -29,6 +29,7 @@ struct ExportButton: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .disabled(isDisabled)
+        .help(Constants.Tooltips.exportIcons)
     }
 }
 

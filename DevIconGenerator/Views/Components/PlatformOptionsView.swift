@@ -18,9 +18,13 @@ struct PlatformOptionsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Toggle("iPhone", isOn: $isExportingToiPhone)
+                .help(Constants.Tooltips.platformiPhone)
             Toggle("iPad", isOn: $isExportingToiPad)
+                .help(Constants.Tooltips.platformiPad)
             Toggle("Mac", isOn: $isExportingToMac)
+                .help(Constants.Tooltips.platformMac)
             Toggle("Apple Watch", isOn: $isExportingToWatch)
+                .help(Constants.Tooltips.platformWatch)
         }
         .disabled(isDisabled)
     }

@@ -64,10 +64,6 @@ struct ContentView: View {
                 iconView
                     .frame(width: 300, height: 300)
 
-                if let image = viewModel.selectedImage {
-                    IconSizePreviewView(image: image)
-                }
-
                 if viewModel.isExportingInProgress {
                     StatusMessageView(type: .progress, showProgress: true)
                 }
@@ -92,6 +88,7 @@ struct ContentView: View {
                     viewModel.importImage()
                 }
                 .keyboardShortcut("o", modifiers: .command)
+                .help(Constants.Tooltips.openImage)
             }
             ToolbarItem(placement: .primaryAction) {
                 Button("Export") {
@@ -99,6 +96,7 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("e", modifiers: .command)
                 .disabled(viewModel.isExportButtonDisabled)
+                .help(Constants.Tooltips.exportIcons)
             }
             #endif
         }
@@ -108,14 +106,10 @@ struct ContentView: View {
             ImagePickerView(image: $viewModel.selectedImage)
         }
     }
-    
+
     private var mobileLayout: some View {
         VStack(spacing: Constants.UI.standardSpacing) {
             iconView
-
-            if let image = viewModel.selectedImage {
-                IconSizePreviewView(image: image)
-            }
 
             if viewModel.isExportingInProgress {
                 StatusMessageView(type: .progress, showProgress: true)
@@ -139,6 +133,7 @@ struct ContentView: View {
                     viewModel.importImage()
                 }
                 .keyboardShortcut("o", modifiers: .command)
+                .help(Constants.Tooltips.openImage)
             }
             ToolbarItem(placement: .primaryAction) {
                 Button("Export") {
@@ -146,6 +141,7 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("e", modifiers: .command)
                 .disabled(viewModel.isExportButtonDisabled)
+                .help(Constants.Tooltips.exportIcons)
             }
             #endif
         }

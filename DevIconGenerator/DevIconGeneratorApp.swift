@@ -38,10 +38,8 @@ struct DevIconGeneratorApp: App {
                 width: Constants.UI.Window.minWidth,
                 height: Constants.UI.Window.minHeight
             )
-            sizeRestrictions.maximumSize = CGSize(
-                width: Constants.UI.Window.maxWidth,
-                height: Constants.UI.Window.maxHeight
-            )
+            // Sin máximo para permitir redimensionar la ventana libremente
+            sizeRestrictions.maximumSize = CGSize(width: 4096, height: 4096)
         }
         #endif
     }

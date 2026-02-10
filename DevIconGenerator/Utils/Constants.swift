@@ -42,11 +42,6 @@ enum Constants {
             static let sidebarWidth: CGFloat = 250
             static let recommended = "1024×1024"
         }
-
-        enum SizePreview {
-            static let labels = ["29 pt", "60 pt", "1024 pt"]
-            static let displaySizes: [CGFloat] = [29, 60, 120]
-        }
     }
     
     // MARK: - Mensajes
@@ -55,5 +50,15 @@ enum Constants {
         static let dragDropHint = "Drag & Drop or Click to Select"
         static let sizeRecommendation = "Recommended size: 1024×1024"
         static let generatingIcons = "Generating icons..."
+    }
+
+    // MARK: - Tooltips
+    enum Tooltips {
+        static let openImage = "Select or replace the source image (⌘O)"
+        static let exportIcons = "Export icon set as ZIP with Contents.json (⌘E)"
+        static let platformiPhone = "Include iPhone app icon sizes (20–60 pt, 1024 pt App Store)"
+        static let platformiPad = "Include iPad app icon sizes (20–83.5 pt, 1024 pt App Store)"
+        static let platformMac = "Include macOS app icon sizes (16–512 pt)"
+        static let platformWatch = "Include Apple Watch icon sizes (24–117 pt, 1024 pt)"
     }
 }
