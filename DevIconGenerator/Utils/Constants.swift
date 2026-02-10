@@ -42,6 +42,11 @@ enum Constants {
             static let sidebarWidth: CGFloat = 250
             static let recommended = "1024×1024"
         }
+
+        enum SizePreview {
+            static let labels = ["29 pt", "60 pt", "1024 pt"]
+            static let displaySizes: [CGFloat] = [29, 60, 120]
+        }
     }
     
     // MARK: - Mensajes

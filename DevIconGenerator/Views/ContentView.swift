@@ -21,10 +21,8 @@ struct ContentView: View {
         }
     }
     
-    // Desktop layout with sidebar design
     private var desktopLayout: some View {
         HStack(spacing: 0) {
-            // Sidebar
             VStack(alignment: .leading, spacing: 20) {
                 Text("DEV Icon Generator")
                     .font(.title)
@@ -60,29 +58,49 @@ struct ContentView: View {
             .padding(.horizontal)
             .background(Color(uiColor: .secondarySystemBackground))
             
-            // Main content area
-            VStack {
+            VStack(spacing: Constants.UI.standardSpacing) {
                 Spacer()
-                
+
                 iconView
                     .frame(width: 300, height: 300)
-                
+
+                if let image = viewModel.selectedImage {
+                    IconSizePreviewView(image: image)
+                }
+
                 if viewModel.isExportingInProgress {
                     StatusMessageView(type: .progress, showProgress: true)
                 }
-                
+
                 if case let .failure(error) = viewModel.exportingPhase {
                     StatusMessageView(type: .error(error))
                 }
-                
+
                 if case .completed = viewModel.exportingPhase {
                     StatusMessageView(type: .success)
                 }
-                
+
                 Spacer()
             }
             .frame(maxWidth: .infinity)
             .background(Color(uiColor: .systemBackground))
+        }
+        .toolbar {
+            #if targetEnvironment(macCatalyst)
+            ToolbarItem(placement: .primaryAction) {
+                Button("Open Image") {
+                    viewModel.importImage()
+                }
+                .keyboardShortcut("o", modifiers: .command)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Export") {
+                    viewModel.export()
+                }
+                .keyboardShortcut("e", modifiers: .command)
+                .disabled(viewModel.isExportButtonDisabled)
+            }
+            #endif
         }
         .animation(.default, value: viewModel.exportingPhase)
         .animation(.default, value: viewModel.selectedImage)
@@ -91,18 +109,22 @@ struct ContentView: View {
         }
     }
     
-    // Mobile layout (original design)
     private var mobileLayout: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: Constants.UI.standardSpacing) {
             iconView
+
+            if let image = viewModel.selectedImage {
+                IconSizePreviewView(image: image)
+            }
+
             if viewModel.isExportingInProgress {
                 StatusMessageView(type: .progress, showProgress: true)
             }
-            
+
             if case let .failure(error) = viewModel.exportingPhase {
                 StatusMessageView(type: .error(error))
             }
-            
+
             if case .completed = viewModel.exportingPhase {
                 StatusMessageView(type: .success)
             }
@@ -110,6 +132,23 @@ struct ContentView: View {
         }
         .background(Color(uiColor: .systemBackground))
         .padding()
+        .toolbar {
+            #if targetEnvironment(macCatalyst)
+            ToolbarItem(placement: .primaryAction) {
+                Button("Open Image") {
+                    viewModel.importImage()
+                }
+                .keyboardShortcut("o", modifiers: .command)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button("Export") {
+                    viewModel.export()
+                }
+                .keyboardShortcut("e", modifiers: .command)
+                .disabled(viewModel.isExportButtonDisabled)
+            }
+            #endif
+        }
         .animation(.default, value: viewModel.exportingPhase)
         .animation(.default, value: viewModel.selectedImage)
         .fullScreenCover(isPresented: $viewModel.isPresentingImagePicker) {
