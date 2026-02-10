@@ -29,20 +29,20 @@ class ViewModel: NSObject, ObservableObject {
     private let iconGeneratorService = IconFileGeneratorService(fileService: FileIconService(), resizeService: IconResizerService())
     
     
-    private var isAllExportOptonsDisabled: Bool {
+    private var isAllExportOptionsDisabled: Bool {
         !isExportingToiPhone && !isExportingToiPad && !isExportingToMac && !isExportingToWatch
     }
-    
+
     var isToggleOptionsDisabled: Bool {
         selectedImage == nil
     }
-    
+
     var isExportingInProgress: Bool {
         exportingPhase == .inProgress
     }
-    
+
     var isExportButtonDisabled: Bool {
-        isAllExportOptonsDisabled || isToggleOptionsDisabled || isAllExportOptonsDisabled
+        isAllExportOptionsDisabled || isToggleOptionsDisabled
     }
     
     

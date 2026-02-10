@@ -97,21 +97,19 @@ jobs:
         
         ## Quick Start
         1. Download the DMG file below
-        2. Open the DMG and drag AVD Manager to Applications  
+        2. Open the DMG and drag DevIconGenerator to Applications
         3. Launch from Applications or Spotlight
-        4. Access Settings to configure your Android SDK path
+        4. Select or drag an image (1024×1024 recommended) and choose target platforms
         
         ## System Requirements
         - macOS 14.0 or later (Universal Binary: Intel & Apple Silicon)
-        - Android SDK with emulator tools installed
-        - Xcode Command Line Tools (for Android development)
+        - iOS 15.0 or later (iPhone / iPad)
         
         ## Key Features
-        - 📱 Launch and stop Android emulators from the status bar
-        - ⚙️ Configurable Android SDK path in Settings
-        - 🎯 Real-time emulator status detection  
-        - 🎨 Professional JetBrains Toolbox-inspired interface
-        - ⚡ Fast and lightweight
+        - 📱 Generate app icons for iOS, iPadOS, macOS and watchOS
+        - 🖼️ Drag & drop or pick image; export as ZIP with Contents.json
+        - 🎯 Per-platform size templates (iPhone, iPad, Mac, Apple Watch)
+        - ⚡ Fast parallel resizing
         - 🔍 Spotlight-searchable with custom app icon
         
         ## File Verification
@@ -121,7 +119,7 @@ jobs:
         
         ---
         
-        **Note**: This app requires Android SDK tools to be installed and accessible in your PATH. Use Settings to configure custom SDK locations.
+        **Note**: Use a 1024×1024 source image for best results. Export produces platform folders (iOS, Mac, Watch) ready to drop into Xcode.
         EOF
         
     - name: Create GitHub Release

@@ -29,7 +29,6 @@ enum Constants {
         static let successColor = Color.green
         static let errorColor = Color.red
         
-        // Tamaños de ventana para macOS
         enum Window {
             static let minWidth: CGFloat = 800
             static let minHeight: CGFloat = 600
@@ -37,7 +36,6 @@ enum Constants {
             static let maxHeight: CGFloat = 800
         }
         
-        // Tamaños de iconos
         enum IconSize {
             static let preview: CGFloat = 300
             static let mobile: CGFloat = 200
